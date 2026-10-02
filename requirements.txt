@@ -18,7 +18,7 @@ datasets>=3.0
 numpy>=2.5.3
 scikit-learn>=1.9.1
 
-# `hf` CLI, used by setup_colab.sh to download the checkpoint. The upper bound is
+# `hf` CLI, used by setup.sh to download the checkpoint. The upper bound is
 # required: transformers, tokenizers and datasets all require huggingface-hub <2.
 huggingface_hub>=0.34,<2.0
 

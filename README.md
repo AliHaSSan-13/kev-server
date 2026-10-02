@@ -1,71 +1,64 @@
-# Kev Decision API — Colab
+# Kev Server
 
-A [FastAPI](https://fastapi.tiangolo.com/) service that exposes the
-[Kev](https://github.com/jaredpalmer/kev) decision models over HTTP, built to run on a
-free Google Colab GPU runtime.
+A [FastAPI](https://fastapi.tiangolo.com/) HTTP service for the
+[Kev](https://github.com/jaredpalmer/kev) decision models. Runs on a Google Colab GPU runtime
+or on any local machine with Python 3.12 / 3.13 — same three steps either way.
 
 Kev is a family of small decision models built on Qwen3.5 by
-[Jared Palmer](https://github.com/jaredpalmer). Give it a piece of text (`state`) and a set
-of questions, and it answers them together and returns a probability distribution for every
-answer — `noul` (yes/no), `choice` (pick an option) and `score` (pick a level on an ordered
-scale).
+[Jared Palmer](https://github.com/jaredpalmer). Give it a piece of text (`state`) and a set of
+questions, and it answers them together, returning a probability distribution for every answer
+— `noul` (yes/no), `choice` (pick an option) and `score` (pick a level on an ordered scale).
+
+> **Going straight to Colab?** Jump to [Running on Google Colab](#running-on-google-collab) —
+> the same install-and-run flow, plus which runtime to pick and what the free GPU can handle.
 
 This repository is a **third-party wrapper**. It is not affiliated with, endorsed by, or
-supported by the Kev authors. Kev itself is Apache-2.0 and is cloned from GitHub at setup
-time; none of its code is redistributed here.
-
-> **Scope:** this is the **Colab** version. It downloads the checkpoint from the Hugging Face
-> Hub and runs on GPU when one is available. The local CPU-only variant, which repoints the
-> checkpoint at a hand-downloaded Qwen base model, is out of scope and is not published here.
+supported by the Kev authors. Kev itself is Apache-2.0 and is cloned from GitHub at setup time;
+none of its code is redistributed here.
 
 ---
 
 ## Quickstart
 
-Pick **Runtime → Change runtime type → GPU** first, then run this in a cell:
-
 ```bash
-!git clone https://github.com/AliHaSSan-13/kev-server-colab.git && cd kev-server-colab && bash setup_colab.sh
+git clone https://github.com/AliHaSSan-13/kev-server-colab.git
+cd kev-server-colab
+bash setup.sh
 ```
 
-The server stays in the foreground when it comes up, so the cell keeps running. That is fine
-if you only need `localhost`. To tunnel it out with ngrok, or to keep using the notebook, open
-the **Terminal** panel at the bottom left, start the server in one tab and
-[ngrok](#exposing-the-api-with-ngrok) in a second one.
+That is the whole thing: clone kev, drop this project's files in, install, download the model,
+start the server on `http://127.0.0.1:8000`.
 
-`setup_colab.sh` does everything, in this order:
+`setup.sh` does this, in order:
 
 1. reports the Python, torch and GPU it found
 2. clones `jaredpalmer/kev` into `./kev`
-3. copies `main.py`, `requirements.txt` and this README into `./kev` (`README_COLLAB.md`)
+3. copies `main.py`, `requirements.txt` and this README into `./kev` (as `README_COLLAB.md`)
 4. `cd kev` — everything from here runs inside the kev checkout, because `import kev` only
    resolves there
 5. installs the requirements and upgrades `huggingface_hub`
 6. creates `models/` and downloads `jaredpalmer/kev-0.8b` into `models/kev-0.8b`
-7. starts the server on `http://127.0.0.1:8000`
+7. starts the server on `http://127.0.0.1:8000` and stays in the foreground
 
-The script is idempotent. Re-running it skips the clone and the model download, so it is safe
-to use after a Colab runtime reset:
+kev has no root `main.py` and no root `requirements.txt`, so step 3 overwrites nothing upstream.
+
+The script is idempotent — re-running it skips the clone and the model download:
 
 ```bash
-cd kev-server-colab && bash setup_colab.sh
+cd kev-server-colab && bash setup.sh
 ```
-
-kev has no root `main.py` and no root `requirements.txt`, so step 3 overwrites nothing
-upstream.
 
 ### Step by step, if you prefer
 
 ```bash
 git clone https://github.com/jaredpalmer/kev.git
 cd kev
-# copy main.py, requirements.txt and setup_colab.sh from this repository into kev/
-bash setup_colab.sh
+# copy main.py, requirements.txt and setup.sh from this repository into kev/
+bash setup.sh
 ```
 
-The script detects that it is already inside a kev checkout and skips steps 2 and 3.
-
-Under the hood, `setup_colab.sh` is exactly the manual sequence:
+The script detects that it is already inside a kev checkout and skips steps 2 and 3. Under the
+hood it is exactly the manual sequence:
 
 ```bash
 pip install --upgrade "huggingface_hub>=0.34,<2.0"
@@ -80,42 +73,36 @@ python main.py
 > `huggingface-hub<2`. The result is a broken environment that only shows up as an import
 > error at model load. `<2.0` still provides the `hf` CLI.
 
-`torch` is left open-ended in `requirements.txt` on purpose. kev's `pyproject.toml` caps it
-at `<2.9`, but Colab ships a preinstalled CUDA build, and honouring that cap means a
-multi-GB reinstall. If a future torch release breaks kev on your runtime, pin it:
-
-```bash
-pip install "torch>=2.6,<2.9"
-```
-
-The script is idempotent — the model download is skipped if `models/kev-0.8b` already exists,
-so re-running it is safe after a Colab runtime reset.
-
-`requirements.txt` is safe to add next to kev's own `pyproject.toml`: kev does not ship a
-`requirements.txt`, so nothing upstream is overwritten.
+> **`torch` is left open-ended on purpose.** kev's `pyproject.toml` caps it at `<2.9`, but
+> Colab ships a preinstalled CUDA build and honouring that cap means a multi-GB reinstall. If a
+> future torch release breaks kev on your machine, pin it: `pip install "torch>=2.6,<2.9"`.
 
 ---
 
 ## Requirements
 
-- Python 3.12 or 3.13 (Colab's default qualifies)
-- A GPU runtime is strongly recommended. Free Colab gives a T4, which runs `kev-0.8b` comfortably
-- About 5 GB of disk for the adapter and the base model
+- Python 3.12 or 3.13 (kev declares `>=3.12,<3.14`)
+- `git` and `pip`
+- About 5 GB of disk for the checkpoint and the base model
+- A GPU is optional. Without one the service still runs, on CPU, slowly.
+
+The first run downloads the model from the Hugging Face Hub and caches it, so every run after
+that works offline. Set `HF_HUB_OFFLINE=1` to assert that.
 
 ## Models
 
 | Model | Base model | Disk | Notes |
 |---|---|---|---|
-| `kev-0.8b` (default) | Qwen3.5-0.8B-Base | ~5 GB | Fits the free T4. Use this one. |
-| `kev-4b` | Qwen3.5-4B-Base | ~12 GB | Slow on a T4 and close to the VRAM limit. Colab Pro (A100) recommended. |
+| `kev-0.8b` (default) | Qwen3.5-0.8B-Base | ~5 GB | The one to use unless you have a reason not to. |
+| `kev-4b` | Qwen3.5-4B-Base | ~12 GB | Several accuracy points better, needs a real GPU. |
 
 ```bash
-KEV_MODEL=kev-4b bash setup_colab.sh
+KEV_MODEL=kev-4b bash setup.sh
 ```
 
-Accuracy rises with size (Kev-4B is several points above Kev-0.8B on the community Decision
-Index). See the [upstream model table](https://github.com/jaredpalmer/kev#models) for the
-numbers.
+Accuracy rises with size — see the
+[upstream model table](https://github.com/jaredpalmer/kev#models) for the numbers against the
+community Decision Index.
 
 ## Configuration
 
@@ -125,7 +112,7 @@ All optional, all environment variables read by `main.py`:
 |---|---|---|
 | `KEV_MODEL` | `kev-0.8b` | Checkpoint directory under `models/` |
 | `KEV_DEVICE` | `cuda` if available, else `cpu` | Force a device |
-| `KEV_HOST` | `127.0.0.1` | Bind address. Use `0.0.0.0` for direct LAN access |
+| `KEV_HOST` | `127.0.0.1` | Bind address. Use `0.0.0.0` to accept traffic from other machines |
 | `KEV_PORT` | `8000` | Port |
 | `KEV_API_KEY` | generated on first run | Value required in the `X-API-Key` header |
 
@@ -137,13 +124,14 @@ All optional, all environment variables read by `main.py`:
 2. a Colab secret named `KEV_API_KEY`,
 3. a key it generates on first run and writes to `.api_key` (gitignored).
 
-If none is set, the key is printed once at startup. To pin your own, add it as a Colab secret
-(**🔑 Secrets** in the left sidebar, name it `KEV_API_KEY`) or set it before starting:
+If none is set, the key is printed once at startup. To pin your own:
 
-```python
-import os
-os.environ["KEV_API_KEY"] = "choose-something-long-and-random"
+```bash
+export KEV_API_KEY="choose-something-long-and-random"
 ```
+
+On Colab, add it as a secret instead — the **🔑 Secrets** panel in the left sidebar, named
+`KEV_API_KEY`.
 
 ---
 
@@ -164,7 +152,7 @@ curl http://127.0.0.1:8000/health
 ```
 
 ```json
-{ "status": "ok", "model": "/content/kev/models/kev-0.8b", "device": "cuda" }
+{ "status": "ok", "model": "/path/to/kev/models/kev-0.8b", "device": "cuda" }
 ```
 
 ### Predict
@@ -200,7 +188,7 @@ curl -X POST http://127.0.0.1:8000/predict \
 
 ```json
 {
-  "model": "/content/kev/models/kev-0.8b",
+  "model": "/path/to/kev/models/kev-0.8b",
   "results": {
     "department": {
       "type": "choice",
@@ -238,8 +226,8 @@ curl -X POST http://127.0.0.1:8000/predict \
 | `input_tokens` | Tokens in the state and questions |
 | `inference_temperature` | The calibration temperature fitted to this checkpoint |
 
-Treat `probabilities` as a ranking and routing signal, not a calibrated real-world
-probability. Threshold them on your own data before you automate anything.
+Treat `probabilities` as a ranking and routing signal, not a calibrated real-world probability.
+Threshold them on your own data before you automate anything.
 
 ### Question types
 
@@ -249,8 +237,7 @@ probability. Threshold them on your own data before you automate anything.
 { "type": "noul", "instructions": "Is this ticket about billing?" }
 ```
 
-**`choice`** — one option out of 1–255. `criteria` is a required object of
-`name -> description`.
+**`choice`** — one option out of 1–255. `criteria` is a required object of `name -> description`.
 
 ```json
 { "type": "choice", "instructions": "Which team should handle this?",
@@ -264,8 +251,8 @@ probability. Threshold them on your own data before you automate anything.
   "criteria": ["can wait", "this week", "today"] }
 ```
 
-Questions are answered independently — they never see each other's answers — so you can ask
-all of them in one request.
+Questions are answered independently — they never see each other's answers — so you can ask all
+of them in one request.
 
 ### From Python
 
@@ -295,17 +282,113 @@ print(response.json()["results"]["relevant"])
 
 ---
 
+## Running on a local machine
+
+Nothing extra is required — `bash setup.sh` installs into whatever Python is on your `PATH`. Two
+things worth doing first:
+
+**Use a virtualenv**, so the install doesn't touch your system packages:
+
+```bash
+python3 -m venv .venv && source .venv/bin/activate
+bash setup.sh
+```
+
+**On a CPU-only Linux box, install torch from the CPU index first**, otherwise pip pulls
+several GB of CUDA wheels you cannot use:
+
+```bash
+pip install torch --index-url https://download.pytorch.org/whl/cpu
+bash setup.sh
+```
+
+`requirements.txt` asks for `torch>=2.6`, so the CPU build already installed is kept.
+
+On a CUDA machine the default PyPI wheel is what you want. For Qwen3.5 bases on CUDA, kev's
+own docs recommend `pip install flash-linear-attention` for throughput.
+
+Reach the server from another machine on your network with `KEV_HOST=0.0.0.0 bash setup.sh` —
+and read the [ngrok section](#exposing-the-api-with-ngrok) first if the machine is not yours.
+
+## Running on Google Colab
+
+Same `bash setup.sh`, GPU instead of CPU. Two extra things:
+
+**Pick a GPU runtime.** Runtime → Change runtime type → GPU. Free Colab gives a T4, which runs
+`kev-0.8b` comfortably; `kev-4b` is slow on a T4 and close to the VRAM limit, so use Colab Pro
+(A100) if you want the 4B model.
+
+**Use the Terminal panel**, at the bottom left. It is the easiest place to run a long-lived
+server, and it gives you a second tab for ngrok later:
+
+```bash
+git clone https://github.com/AliHaSSan-13/kev-server-colab.git
+cd kev-server-colab
+bash setup.sh
+```
+
+Leave that tab running. Open a second tab (`+` in the Terminal panel) for anything else —
+including [ngrok](#exposing-the-api-with-ngrok).
+
+Free Colab notes:
+
+- The runtime is ephemeral. When it resets, clone and run `setup.sh` again; the model
+  re-downloads unless it is still on disk.
+- Idle sessions are suspended, and the GPU is not guaranteed. If the model moves to CPU,
+  requests take minutes instead of milliseconds.
+- Colab's disk is limited. `du -sh kev/models ~/.cache/huggingface` shows where the ~5 GB went;
+  `rm -rf kev/models/*` clears it (it re-downloads).
+
+---
+
+## Troubleshooting
+
+**`GPU: none detected - this will run on CPU and be very slow.`**
+Colab: Runtime → Change runtime type → GPU, then restart the session. Locally: check
+`python -c "import torch; print(torch.cuda.is_available())"` inside the same environment the
+server runs in.
+
+**`torch.cuda.OutOfMemoryError`**
+Drop to `KEV_MODEL=kev-0.8b`, shorten the `state`, or ask fewer questions per request.
+
+**`ModuleNotFoundError: No module named 'kev'`**
+`main.py` has to run from the root of a kev checkout, where the `kev/` package lives. The script
+handles this by copying itself into `kev/` and running from there. If you moved `main.py`
+elsewhere, `cd` back or re-run `bash setup.sh` from this repository's root.
+
+**`error: the kev package is not importable from ...`**
+The clone in `./kev` is incomplete or the `kev/` package is missing from it. Remove it and let
+the script redo it: `rm -rf kev && bash setup.sh`.
+
+**`error: python 3 not found on PATH`**
+Install Python 3.12 or 3.13, or point at it: `PY=...` is not configurable, but
+`python3.12 -m venv .venv` then `bash setup.sh` from the activated venv works.
+
+**Transformers, tokenizers or datasets fail to import after install**
+`huggingface_hub` is 2.x. `pip install "huggingface_hub<2.0"` — `setup.sh` already does this,
+but a manual install from the step-by-step section can skip it.
+
+**Disk full**
+`du -sh kev/models ~/.cache/huggingface`, then `rm -rf kev/models/*`. Both re-download on the
+next run.
+
+**Want kev's own server instead?**
+Upstream ships one: `uv run --extra serve python -m kev.serve --run jaredpalmer/kev-4b --port 8009`,
+with a `POST /v1/systemone` endpoint matching the TypeSafe System One API, so the TypeSafe
+Python SDK works against it unchanged. This project is a smaller, dependency-light alternative
+with a `/predict` endpoint — not a replacement.
+
+---
+
 ## Exposing the API with ngrok
 
-Leave the server running — don't stop it. Open the **Terminal** panel at the bottom left of
-Colab and use a **second terminal tab** for ngrok (`+` in the terminal panel opens a new one):
+Works the same locally and on Colab: the service already listens on `127.0.0.1:8000`, and ngrok
+forwards a public URL to it. `ngrok http 8000` needs no change to `KEV_HOST` — the tunnel
+terminates at ngrok's edge and forwards to your loopback interface.
 
-| Terminal tab | Command |
-|---|---|
-| tab 1 | `bash setup_colab.sh` (or `python main.py`) — leave this running |
-| tab 2 | the ngrok commands below |
-
-In the second tab:
+Leave the server running. Open a **second terminal tab** (Colab: the Terminal panel at the
+bottom left, `+` for a new tab) and put ngrok there, so the two are independent processes and
+restarting either leaves the other alone.
 
 ```bash
 pip install -q pyngrok
@@ -323,14 +406,11 @@ Then open the tunnel:
 ngrok http 8000
 ```
 
-ngrok prints the public URL in its dashboard, e.g.
+ngrok prints the public URL in its dashboard:
 
 ```
 Forwarding                    https://a1b2c3d4-5678.ngrok-free.app -> http://localhost:8000
 ```
-
-`ngrok http 8000` works against the `127.0.0.1` bind address — the tunnel terminates at ngrok's
-edge and forwards to your loopback interface, so you do not need `KEV_HOST=0.0.0.0`.
 
 Copy that URL into whatever you want to call it from:
 
@@ -352,11 +432,10 @@ response = requests.post(
 print(response.json()["results"]["urgent"]["probabilities"])
 ```
 
-Or from the terminal, using the key `main.py` generated for you. In the second terminal tab,
-`cd` into the kev directory first so `.api_key` is in reach:
+Or from the terminal. In the kev directory, the key `main.py` generated is in `.api_key`:
 
 ```bash
-cd kev-server-collab/kev
+cd kev-server-colab/kev
 
 curl -s -X POST http://localhost:8000/predict \
   -H "Content-Type: application/json" \
@@ -366,53 +445,17 @@ curl -s -X POST http://localhost:8000/predict \
     "questions": {"urgent": {"type": "noul", "instructions": "Escalate this?"}}
   }'
 
-# through the tunnel, no key needed for health
+# through the tunnel; health needs no key
 curl -s https://a1b2c3d4-5678.ngrok-free.app/health
 ```
 
-ngrok and the server are two separate processes in two separate terminals, so you can restart
-either one without touching the other. To bring the tunnel down, press `Ctrl+C` in the ngrok
-tab — the server in the other tab keeps running.
+Press `Ctrl+C` in the ngrok tab to bring the tunnel down; the server keeps running in the other
+tab.
 
 > **Security.** The ngrok URL is on the public internet. Anyone who has it *and* your API key
-> can spend your Colab GPU. Keep `KEV_API_KEY` out of git, out of shared notebooks, and rotate
-> it if the URL leaks. Colab also kills the runtime when you leave the tab idle long enough,
-> which closes the tunnel with it.
-
----
-
-## Troubleshooting
-
-**"GPU: none detected - this will run on CPU and be very slow."**
-Runtime → Change runtime type → GPU, then restart the session. Free Colab T4 is enough for
-`kev-0.8b`.
-
-**`torch.cuda.OutOfMemoryError`**
-Drop to `KEV_MODEL=kev-0.8b`, shorten the `state`, or use fewer questions per request.
-
-**Disk full in Colab**
-Colab gives a limited ephemeral disk. The checkpoint and the Qwen base model land in
-`kev/models/` and the Hugging Face cache; `du -sh kev/models ~/.cache/huggingface` shows where
-they went, and `rm -rf kev/models/*` clears them (they re-download on the next run).
-
-**`ModuleNotFoundError: No module named 'kev'`**
-`main.py` has to run from the root of a kev checkout, where the `kev/` package lives. The
-script handles this by copying itself into `kev/` and running from there; if you moved `main.py`
-somewhere else, `cd` back or re-run `bash setup_colab.sh` from this repository's root.
-
-**`error: the kev package is not importable from ...`**
-The clone in `./kev` is incomplete or the `kev/` package is missing from it. Remove and let the
-script redo it: `rm -rf kev && bash setup_colab.sh`.
-
-**Server dies between cells**
-Free Colab suspends idle runtimes. Restart it and re-run `cd kev-server-colab && bash setup_colab.sh`;
-the clone and the model download are skipped.
-
-**Want kev's own server instead?**
-Upstream ships one: `uv run --extra serve python -m kev.serve --run jaredpalmer/kev-4b --port 8009`,
-with a `POST /v1/systemone` endpoint that matches the TypeSafe System One API, so the TypeSafe
-Python SDK works against it unchanged. This project is a smaller, dependency-light alternative
-with a `/predict` endpoint — not a replacement.
+> can spend your GPU. Keep `KEV_API_KEY` out of git, out of shared notebooks, and rotate it if
+> the URL leaks. Colab also kills the runtime when you leave the tab idle long enough, which
+> closes the tunnel with it.
 
 ---
 
@@ -420,8 +463,8 @@ with a `/predict` endpoint — not a replacement.
 
 Apache-2.0. See [LICENSE](LICENSE).
 
-Kev and the model weights are separate works by the Kev authors, also Apache-2.0, obtained
-from [github.com/jaredpalmer/kev](https://github.com/jaredpalmer/kev) and
+Kev and the model weights are separate works by the Kev authors, also Apache-2.0, obtained from
+[github.com/jaredpalmer/kev](https://github.com/jaredpalmer/kev) and
 [huggingface.co/jaredpalmer/kev-0.8b](https://huggingface.co/jaredpalmer/kev-0.8b). Neither is
 included in this repository.
 
