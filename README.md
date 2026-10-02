@@ -9,7 +9,7 @@ Kev is a family of small decision models built on Qwen3.5 by
 questions, and it answers them together, returning a probability distribution for every answer
 — `noul` (yes/no), `choice` (pick an option) and `score` (pick a level on an ordered scale).
 
-> **Going straight to Colab?** Jump to [Running on Google Colab](#running-on-google-collab) —
+> **Going straight to Colab?** Jump to [Running on Google Colab](https://github.com/AliHaSSan-13/kev-server#running-on-google-colab) —
 > the same install-and-run flow, plus which runtime to pick and what the free GPU can handle.
 
 This repository is a **third-party wrapper**. It is not affiliated with, endorsed by, or
@@ -308,7 +308,7 @@ On a CUDA machine the default PyPI wheel is what you want. For Qwen3.5 bases on 
 own docs recommend `pip install flash-linear-attention` for throughput.
 
 Reach the server from another machine on your network with `KEV_HOST=0.0.0.0 bash setup.sh` —
-and read the [ngrok section](#exposing-the-api-with-ngrok) first if the machine is not yours.
+and read the [ngrok section](https://github.com/AliHaSSan-13/kev-server#exposing-the-api-with-ngrok) first if the machine is not yours.
 
 ## Running on Google Colab
 
@@ -328,7 +328,7 @@ bash setup.sh
 ```
 
 Leave that tab running. Open a second tab (`+` in the Terminal panel) for anything else —
-including [ngrok](#exposing-the-api-with-ngrok).
+including [ngrok](https://github.com/AliHaSSan-13/kev-server#exposing-the-api-with-ngrok).
 
 Free Colab notes:
 
