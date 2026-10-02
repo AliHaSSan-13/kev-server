@@ -22,11 +22,16 @@ time; none of its code is redistributed here.
 
 ## Quickstart
 
-One cell in a Colab notebook. Pick **Runtime → Change runtime type → GPU** first, then:
+Pick **Runtime → Change runtime type → GPU** first, then run this in a cell:
 
 ```bash
 !git clone https://github.com/AliHaSSan-13/kev-server-colab.git && cd kev-server-colab && bash setup_colab.sh
 ```
+
+The server stays in the foreground when it comes up, so the cell keeps running. That is fine
+if you only need `localhost`. To tunnel it out with ngrok, or to keep using the notebook, open
+the **Terminal** panel at the bottom left, start the server in one tab and
+[ngrok](#exposing-the-api-with-ngrok) in a second one.
 
 `setup_colab.sh` does everything, in this order:
 
@@ -292,39 +297,47 @@ print(response.json()["results"]["relevant"])
 
 ## Exposing the API with ngrok
 
-`setup_colab.sh` ends by starting the server in the foreground, which blocks the cell. To put
-it in the background instead, run it yourself from the kev checkout:
+Leave the server running — don't stop it. Open the **Terminal** panel at the bottom left of
+Colab and use a **second terminal tab** for ngrok (`+` in the terminal panel opens a new one):
 
-```python
-%cd kev
-!nohup python main.py > server.log 2>&1 &
+| Terminal tab | Command |
+|---|---|
+| tab 1 | `bash setup_colab.sh` (or `python main.py`) — leave this running |
+| tab 2 | the ngrok commands below |
+
+In the second tab:
+
+```bash
+pip install -q pyngrok
 ```
 
-Wait for the server, then open the tunnel:
+Get your authtoken from https://dashboard.ngrok.com/get-started/your-authtoken and add it once:
 
-```python
-!pip install -q pyngrok
-
-from pyngrok import ngrok, conf
-
-# Get your authtoken from https://dashboard.ngrok.com/get-started/your-authtoken
-authtoken = ""
-conf.get_default().auth_token = authtoken
-
-# Open HTTP tunnel to port 8000
-public_url = ngrok.connect(8000).public_url
-print(f"\nPublic API Base URL: {public_url}")
+```bash
+ngrok config add-authtoken YOUR_AUTHTOKEN
 ```
 
-`ngrok.connect(8000)` works against the `127.0.0.1` bind address — the tunnel terminates at
-ngrok's edge and forwards to your loopback interface, so you do not need `KEV_HOST=0.0.0.0`.
+Then open the tunnel:
 
-Call it from another notebook or project:
+```bash
+ngrok http 8000
+```
+
+ngrok prints the public URL in its dashboard, e.g.
+
+```
+Forwarding                    https://a1b2c3d4-5678.ngrok-free.app -> http://localhost:8000
+```
+
+`ngrok http 8000` works against the `127.0.0.1` bind address — the tunnel terminates at ngrok's
+edge and forwards to your loopback interface, so you do not need `KEV_HOST=0.0.0.0`.
+
+Copy that URL into whatever you want to call it from:
 
 ```python
 import requests
 
-PUBLIC_URL = "https://xxxx-xxxx-xxxx.ngrok-free.app"
+PUBLIC_URL = "https://a1b2c3d4-5678.ngrok-free.app"
 KEY = "your KEV_API_KEY"
 
 response = requests.post(
@@ -339,17 +352,32 @@ response = requests.post(
 print(response.json()["results"]["urgent"]["probabilities"])
 ```
 
-Health checks are unauthenticated, so you can also verify the tunnel with:
+Or from the terminal, using the key `main.py` generated for you. In the second terminal tab,
+`cd` into the kev directory first so `.api_key` is in reach:
 
 ```bash
-curl https://xxxx-xxxx-xxxx.ngrok-free.app/health
+cd kev-server-collab/kev
+
+curl -s -X POST http://localhost:8000/predict \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: $(cat .api_key)" \
+  -d '{
+    "state": "The customer wants a refund for a late order.",
+    "questions": {"urgent": {"type": "noul", "instructions": "Escalate this?"}}
+  }'
+
+# through the tunnel, no key needed for health
+curl -s https://a1b2c3d4-5678.ngrok-free.app/health
 ```
+
+ngrok and the server are two separate processes in two separate terminals, so you can restart
+either one without touching the other. To bring the tunnel down, press `Ctrl+C` in the ngrok
+tab — the server in the other tab keeps running.
 
 > **Security.** The ngrok URL is on the public internet. Anyone who has it *and* your API key
 > can spend your Colab GPU. Keep `KEV_API_KEY` out of git, out of shared notebooks, and rotate
-> it if the URL leaks. Stop the tunnel when you are done:
-> `ngrok.kill()`. Colab also kills the runtime when you close the tab long enough, which closes
-> the tunnel with it.
+> it if the URL leaks. Colab also kills the runtime when you leave the tab idle long enough,
+> which closes the tunnel with it.
 
 ---
 
