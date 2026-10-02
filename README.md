@@ -1,3 +1,5 @@
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/AliHaSSan-13/kev-server/blob/main/README.md)
+
 # Kev Server
 
 A [FastAPI](https://fastapi.tiangolo.com/) HTTP service for the
@@ -11,6 +13,9 @@ questions, and it answers them together, returning a probability distribution fo
 
 > **Going straight to Colab?** Jump to [Running on Google Colab](https://github.com/AliHaSSan-13/kev-server#running-on-google-colab) —
 > the same install-and-run flow, plus which runtime to pick and what the free GPU can handle.
+>
+> The badge at the top opens this page as a notebook, already connected to a Colab runtime, so
+> you can add a cell and paste the quickstart instead of copying the clone URL by hand.
 
 This repository is a **third-party wrapper**. It is not affiliated with, endorsed by, or
 supported by the Kev authors. Kev itself is Apache-2.0 and is cloned from GitHub at setup time;
