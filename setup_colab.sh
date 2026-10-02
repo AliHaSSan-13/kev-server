@@ -2,7 +2,7 @@
 #
 # One-command setup for the Kev decision API.
 #
-#   !git clone https://github.com/AliHaSSan-13/kev-server-collab.git && cd kev-server-colab && bash setup_colab.sh
+#   !git clone https://github.com/AliHaSSan-13/kev-server-colab.git && cd kev-server-colab && bash setup_colab.sh
 #
 # The script clones kev, copies this project's files into the kev root and runs
 # everything from there, because `import kev` needs the kev package on the path,

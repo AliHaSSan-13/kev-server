@@ -25,7 +25,7 @@ time; none of its code is redistributed here.
 One cell in a Colab notebook. Pick **Runtime → Change runtime type → GPU** first, then:
 
 ```bash
-!git clone https://github.com/AliHaSSan-13/kev-server-collab.git && cd kev-server-colab && bash setup_colab.sh
+!git clone https://github.com/AliHaSSan-13/kev-server-colab.git && cd kev-server-colab && bash setup_colab.sh
 ```
 
 `setup_colab.sh` does everything, in this order:
