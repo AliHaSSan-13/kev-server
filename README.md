@@ -14,8 +14,8 @@ questions, and it answers them together, returning a probability distribution fo
 > **Going straight to Colab?** Jump to [Running on Google Colab](https://github.com/AliHaSSan-13/kev-server#running-on-google-colab) —
 > the same install-and-run flow, plus which runtime to pick and what the free GPU can handle.
 >
-> Or skip the copy entirely: the badge at the top opens `kev_server.ipynb`, a notebook that
-> runs the whole setup, waits for the server, opens an ngrok tunnel and sends a test request.
+> Or skip the copy entirely: the badge at the top opens `kev_server.ipynb`, which runs the
+> setup and leaves the server running, with links to the rest of this README.
 
 This repository is a **third-party wrapper**. It is not affiliated with, endorsed by, or
 supported by the Kev authors. Kev itself is Apache-2.0 and is cloned from GitHub at setup time;
@@ -326,9 +326,8 @@ Same `bash setup.sh`, GPU instead of CPU. Two extra things:
 **Use the Terminal panel**, at the bottom left. It is the easiest place to run a long-lived
 server, and it gives you a second tab for ngrok later:
 
-> **Notebook instead?** `kev_server.ipynb` (the badge at the top of this page) does
-> all of this in cells: it runs `setup.sh` in the background, waits for `/health`, opens the
-> ngrok tunnel and sends a sample request.
+> **Notebook instead?** `kev_server.ipynb` (the badge at the top of this page) just runs
+> `setup.sh` and leaves the server up; everything else is in the docs it links to.
 
 ```bash
 git clone https://github.com/AliHaSSan-13/kev-server-colab.git
