@@ -25,7 +25,7 @@ time; none of its code is redistributed here.
 One cell in a Colab notebook. Pick **Runtime → Change runtime type → GPU** first, then:
 
 ```bash
-!git clone https://github.com/<owner>/<repo>.git && cd <repo> && bash setup_colab.sh
+!git clone https://github.com/AliHaSSan-13/kev-server-collab.git && cd kev-server-colab && bash setup_colab.sh
 ```
 
 `setup_colab.sh` does everything, in this order:
@@ -43,7 +43,7 @@ The script is idempotent. Re-running it skips the clone and the model download, 
 to use after a Colab runtime reset:
 
 ```bash
-cd <repo> && bash setup_colab.sh
+cd kev-server-colab && bash setup_colab.sh
 ```
 
 kev has no root `main.py` and no root `requirements.txt`, so step 3 overwrites nothing
@@ -377,7 +377,7 @@ The clone in `./kev` is incomplete or the `kev/` package is missing from it. Rem
 script redo it: `rm -rf kev && bash setup_colab.sh`.
 
 **Server dies between cells**
-Free Colab suspends idle runtimes. Restart it and re-run `cd <repo> && bash setup_colab.sh`;
+Free Colab suspends idle runtimes. Restart it and re-run `cd kev-server-colab && bash setup_colab.sh`;
 the clone and the model download are skipped.
 
 **Want kev's own server instead?**
