@@ -1,0 +1,19 @@
+# kev, cloned by setup_colab.sh (Apache-2.0, not redistributed here)
+kev/
+
+# downloaded checkpoints and the base model they resolve
+models/
+
+# generated API key
+.api_key
+.env
+
+# python
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+
+# logs
+*.log

@@ -1,0 +1,26 @@
+# web layer
+fastapi>=0.115
+uvicorn[standard]>=0.30
+pydantic>=2.9
+
+# kev runtime. Ranges mirror jaredpalmer/kev pyproject.toml.
+# torch is deliberately left open-ended: kev is tested on <2.9, but Colab ships a
+# preinstalled CUDA build and forcing a downgrade means a multi-GB reinstall. If a
+# future torch release breaks kev, pin "torch>=2.6,<2.9" and reinstall.
+torch>=2.6
+torchao>=0.16.0
+transformers>=5.17,<6
+tokenizers
+safetensors
+accelerate>=1.15.0
+peft>=0.21
+datasets>=3.0
+numpy>=2.5.3
+scikit-learn>=1.9.1
+
+# `hf` CLI, used by setup_colab.sh to download the checkpoint. The upper bound is
+# required: transformers, tokenizers and datasets all require huggingface-hub <2.
+huggingface_hub>=0.34,<2.0
+
+# ngrok tunnel, used by the "Expose the API with ngrok" section of the README
+pyngrok
